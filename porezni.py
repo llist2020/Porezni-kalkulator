@@ -1,6 +1,29 @@
 from datetime import date
 from subprocess import check_call
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import pandas as pd
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import re
 
+options = webdriver.ChromeOptions()
+s = Service('chromedriver/chromedriver96.exe')
+driver = webdriver.Chrome(service=s, options=options)
+
+rate = 0
+driver.get("https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/eurofxref-graph-usd.en.html")
+
+content = driver.page_source
+soup = BeautifulSoup(content, features="html.parser")
+
+for a in soup.find_all("div", {"class": "embed-rate"}):
+    txt=a.find('span').text
+    rate = float(re.findall(r'[\d]*[.][\d]+',txt)[0])
+    print(rate)
+
+driver.close()
+driver.quit()
 
 def copy2clip(txt):
     cmd='echo '+txt.strip()+'|clip'
@@ -38,8 +61,9 @@ def stavi_i_cekaj(inp, i="", d=False):
         z=input()
 
 print("23"+"{0:0=3d}".format(date.today().timetuple()[7]))
+if input("potvrdi tecaj: upisi 'n' za poništavanje  ").lower() == "n":
+    rate = float(input("1 EUR = ... USD s decimalnom tockom  "))
 uplataUSD = float(input("u USD  ").replace(",", "."))
-tecaj = float(input("1 EUR = ... USD s tockom  "))
-uplataEUR = round(uplataUSD/tecaj, 2)
+uplataEUR = round(uplataUSD/rate, 2)
 
 calculate(uplataEUR)
